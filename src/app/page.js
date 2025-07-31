@@ -1,103 +1,122 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useState } from "react";
+function MainPage() {
+  const [query, setQuery] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-export default function Home() {
+  // 🔁 Load chat from localStorage on first render
+  useEffect(() => {
+    const savedChat = localStorage.getItem("chatHistory");
+    if (savedChat) {
+      setChatHistory(JSON.parse(savedChat));
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setLoading(true);
+
+    const updatedHistory = [...chatHistory, { role: "user", content: query }];
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const res = await fetch(`${apiUrl}/ask`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: updatedHistory,
+        }), // ✅ correct key
+      });
+
+      const data = await res.json();
+
+      // ✅ Check if response is valid before adding
+      if (!data.response || typeof data.response !== "string") {
+        alert("AI failed to respond. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const finalChat = [
+        ...updatedHistory,
+        { role: "assistant", content: data.response },
+      ];
+
+      setChatHistory(finalChat);
+      localStorage.setItem("chatHistory", JSON.stringify(finalChat));
+      setQuery("");
+    } catch (error) {
+      alert("Something went wrong. Check console.");
+      console.error("Frontend Error:", error);
+    }
+
+    setLoading(false);
+  };
+
+  // 🧹 Clear chat
+  const handleClear = () => {
+    setChatHistory([]);
+    localStorage.removeItem("chatHistory");
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="container mx-auto px-6 py-6">
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <textarea
+          className="w-full border border-white bg-gray-800 text-white p-2 rounded"
+          rows={5}
+          placeholder="Ask something..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // prevent new line
+              handleSubmit(e); // manually trigger submit
+            }
+          }}
         />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <div className="flex justify-center items-center gap-4">
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-700"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {loading ? "Thinking..." : "ASK GPT"}
+          </button>
+          <button
+            type="button"
+            onClick={handleClear}
+            className="bg-red-500 text-white px-6 py-3 rounded hover:bg-red-700"
           >
-            Read our docs
-          </a>
+            Clear Chat
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </form>
+
+      {/* 💬 Chat History */}
+      {chatHistory.length > 0 && (
+        <div className="mt-6 space-y-4">
+          {chatHistory.map((msg, i) => (
+            <div
+              key={i}
+              className={`p-3 rounded shadow ${
+                msg.role === "user"
+                  ? "bg-gray-700 text-white text-right "
+                  : "bg-gray-200 text-black text-left"
+              }`}
+            >
+              <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
+              {msg.content}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+export default MainPage;
