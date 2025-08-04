@@ -9,7 +9,7 @@ function ChatBoot() {
   const chatContainerRef = useRef(null);
   const bottomRef = useRef(null);
 
-  // 🔁 Load chat from localStorage on first render
+  // ! Load chat from localStorage on first render
   useEffect(() => {
     const savedChat = localStorage.getItem("chatHistory");
     if (savedChat) {
@@ -17,14 +17,14 @@ function ChatBoot() {
     }
   }, []);
 
-  // Auto scroll to bottom when new message is added
+  // ! Auto scroll to bottom when new message is added
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory]);
 
-  // Check if user has scrolled up to show scroll button
+  // ! Check if user has scrolled up to show scroll button
   useEffect(() => {
     const handleScroll = () => {
       if (chatContainerRef.current) {
@@ -42,7 +42,7 @@ function ChatBoot() {
     }
   }, [chatHistory]);
 
-  // Scroll to bottom function
+  // ! Scroll to bottom function
   const scrollToBottom = () => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
@@ -66,12 +66,12 @@ function ChatBoot() {
         },
         body: JSON.stringify({
           messages: updatedHistory,
-        }), // ✅ correct key
+        }), // *  correct key
       });
 
       const data = await res.json();
 
-      // ✅ Check if response is valid before adding
+      // ! Check if response is valid before adding
       if (!data.response || typeof data.response !== "string") {
         alert("AI failed to respond. Please try again.");
         setLoading(false);
@@ -94,7 +94,7 @@ function ChatBoot() {
     setLoading(false);
   };
 
-  // 🧹 Clear chat
+  // ! Clear chat
   const handleClear = () => {
     setChatHistory([]);
     localStorage.removeItem("chatHistory");
@@ -102,7 +102,7 @@ function ChatBoot() {
 
   return (
     <div className="container mx-auto px-6 py-6 relative">
-      {/* 💬 Chat History */}
+      {/* ! Chat History */}
       {chatHistory.length > 0 && (
         <div
           ref={chatContainerRef}
@@ -126,7 +126,7 @@ function ChatBoot() {
         </div>
       )}
 
-      {/* 🔄 Scroll to Bottom Button */}
+      {/* ! Scroll to Bottom Button */}
       {showScrollButton && (
         <button
           onClick={scrollToBottom}
@@ -148,6 +148,7 @@ function ChatBoot() {
           </svg>
         </button>
       )}
+      
       <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
         <textarea
           className="w-full border border-white bg-gray-800 text-white mt-10  mb-10 p-2 rounded"
@@ -183,3 +184,4 @@ function ChatBoot() {
 }
 
 export default ChatBoot;
+

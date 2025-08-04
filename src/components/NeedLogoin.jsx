@@ -41,7 +41,7 @@ async function NeedLogoin() {
 
   return (
     <div>
-      {/* <pre>{JSON.stringify(user, null, 2)}</pre> */}
+      <pre>{JSON.stringify(user, null, 2)}</pre>
       <ChatBoot />
     </div>
   );
