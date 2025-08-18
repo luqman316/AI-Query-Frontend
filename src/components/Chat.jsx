@@ -118,6 +118,19 @@ function ChatBoot({ userId }) {
         { role: "assistant", content: data.response },
       ];
 
+      // Save AI response to backend
+      await fetch(`${apiUrl}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uid: userId,
+          message: data.response,
+          role: "assistant",
+        }),
+      });
+
       setChatHistory(finalChat);
       localStorage.setItem(LOCAL_KEY, JSON.stringify(finalChat));
       setQuery("");
