@@ -86,11 +86,11 @@ function Header() {
           >
             ChatGPT-Clone
           </Link>
-          <nav className="flex gap-2">
+          <nav className="flex">
             {/* * user info */}
             {user ? (
               <div
-                className="relative inline-block text-left"
+                className="relative inline-block  text-left"
                 ref={dropdownRef}
               >
                 <div
@@ -141,18 +141,20 @@ function Header() {
               </div>
             ) : (
               <>
-                <Link
-                  className="bg-blue-500 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-md hover:bg-blue-600"
-                  href={signInUrl}
-                >
-                  Login
-                </Link>
-                <Link
-                  className="bg-green-500 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-md hover:bg-green-600"
-                  href={signUpUrl}
-                >
-                  Sign Up
-                </Link>
+              
+                  <Link
+                    className="bg-blue-500 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-md hover:bg-blue-600"
+                    href={signInUrl}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    className="bg-green-500 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-md hover:bg-green-600"
+                    href={signUpUrl}
+                  >
+                    Sign Up
+                  </Link>
+                
               </>
             )}
           </nav>

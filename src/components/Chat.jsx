@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-function ChatBoot() {
+function ChatBoot({ userId }) {
   const [query, setQuery] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -9,22 +9,50 @@ function ChatBoot() {
   const chatContainerRef = useRef(null);
   const bottomRef = useRef(null);
 
-  // ! Load chat from localStorage on first render
-  useEffect(() => {
-    const savedChat = localStorage.getItem("chatHistory");
-    if (savedChat) {
-      setChatHistory(JSON.parse(savedChat));
-    }
-  }, []);
+  // 🧠 Unique localStorage key per user
+  const LOCAL_KEY = `chatHistory-${userId}`;
 
-  // ! Auto scroll to bottom when new message is added
+  // ✅ Load user-specific chat from backend on login, fallback to localStorage
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchChat = async () => {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const res = await fetch(`${apiUrl}/api/chat/${userId}`);
+        if (res.ok) {
+          const chats = await res.json();
+          // Convert DB format to local format
+          const formatted = chats.map((msg) => ({
+            role: msg.role,
+            content: msg.message,
+          }));
+          setChatHistory(formatted);
+          localStorage.setItem(LOCAL_KEY, JSON.stringify(formatted));
+          return;
+        }
+      } catch (err) {
+        // fallback to localStorage
+      }
+      const savedChat = localStorage.getItem(LOCAL_KEY);
+      if (savedChat) {
+        setChatHistory(JSON.parse(savedChat));
+      } else {
+        setChatHistory([]);
+      }
+    };
+    fetchChat();
+  }, [userId]);
+
+  // ✅ Auto scroll on chat update
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory]);
 
-  // ! Check if user has scrolled up to show scroll button
+  // ✅ Handle scroll button
   useEffect(() => {
     const handleScroll = () => {
       if (chatContainerRef.current) {
@@ -42,7 +70,6 @@ function ChatBoot() {
     }
   }, [chatHistory]);
 
-  // ! Scroll to bottom function
   const scrollToBottom = () => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
@@ -59,19 +86,27 @@ function ChatBoot() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+      // Send user message to backend for DB storage
+      await fetch(`${apiUrl}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ uid: userId, message: query, role: "user" }),
+      });
+
+      // Get AI response
       const res = await fetch(`${apiUrl}/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messages: updatedHistory,
-        }), // *  correct key
+        body: JSON.stringify({ messages: updatedHistory }),
       });
 
       const data = await res.json();
 
-      // ! Check if response is valid before adding
       if (!data.response || typeof data.response !== "string") {
         alert("AI failed to respond. Please try again.");
         setLoading(false);
@@ -84,7 +119,7 @@ function ChatBoot() {
       ];
 
       setChatHistory(finalChat);
-      localStorage.setItem("chatHistory", JSON.stringify(finalChat));
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(finalChat));
       setQuery("");
     } catch (error) {
       alert("Something went wrong. Check console.");
@@ -94,15 +129,14 @@ function ChatBoot() {
     setLoading(false);
   };
 
-  // ! Clear chat
   const handleClear = () => {
     setChatHistory([]);
-    localStorage.removeItem("chatHistory");
+    localStorage.removeItem(LOCAL_KEY);
   };
 
   return (
     <div className="container mx-auto px-6 py-6 relative">
-      {/* ! Chat History */}
+      {/* Chat History */}
       {chatHistory.length > 0 && (
         <div
           ref={chatContainerRef}
@@ -114,7 +148,7 @@ function ChatBoot() {
               key={i}
               className={`p-3 rounded shadow ${
                 msg.role === "user"
-                  ? "bg-gray-700 text-white text-right "
+                  ? "bg-gray-700 text-white text-right"
                   : "bg-gray-200 text-black text-left"
               }`}
             >
@@ -126,7 +160,7 @@ function ChatBoot() {
         </div>
       )}
 
-      {/* ! Scroll to Bottom Button */}
+      {/* Scroll to Bottom Button */}
       {showScrollButton && (
         <button
           onClick={scrollToBottom}
@@ -148,18 +182,18 @@ function ChatBoot() {
           </svg>
         </button>
       )}
-      
+
       <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
         <textarea
-          className="w-full border border-white bg-gray-800 text-white mt-10  mb-10 p-2 rounded"
+          className="w-full border border-white bg-gray-800 text-white mt-10 mb-10 p-2 rounded"
           rows={5}
           placeholder="Ask something..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault(); // prevent new line
-              handleSubmit(e); // manually trigger submit
+              e.preventDefault();
+              handleSubmit(e);
             }
           }}
         />
@@ -184,4 +218,3 @@ function ChatBoot() {
 }
 
 export default ChatBoot;
-
