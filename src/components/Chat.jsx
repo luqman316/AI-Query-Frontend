@@ -76,6 +76,7 @@ function ChatBoot({ userId }) {
     }
   };
 
+  // ✅ Handle chat submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;

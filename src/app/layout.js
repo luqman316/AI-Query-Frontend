@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "../components/Header";
 // import UserDataSaver from "../components/UserDataSaver";
-import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
+// AuthKitProvider intentionally removed to avoid client-side bundling of authkit
 import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,10 +24,8 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthKitProvider>
-          <Header />
-          {children}
-        </AuthKitProvider>
+        <Header />
+        {children}
       </body>
     </html>
   );
